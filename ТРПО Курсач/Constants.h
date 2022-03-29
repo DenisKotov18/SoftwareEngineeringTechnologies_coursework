@@ -23,6 +23,7 @@ const int SALT_LENGTH = 16;
 //newUser
 const char NEW_USER_MENU[] = "--------------/Создание Новой учётной записи/--------------";
 const char ENTER_NEW_USER_LOGIN[] = "Придумайте логин : ";
+const char INVALID_LOGIN[] = "\033[4;31mЭтот логин уже занят!\033[0m";
 const char ENTER_NEW_USER_PASSWORD[] = "Придумайте пароль : ";
 const char NEW_USER_CONF_MENU[] = "Создавая новую запись, Вы соглашаетесь на обработку и хранение введённых Вами данных.";
 //logon

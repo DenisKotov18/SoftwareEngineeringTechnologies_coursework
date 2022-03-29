@@ -13,17 +13,22 @@
 using namespace std;
 
 const vector<string> AUTHORIZATION_POINTS{ "Регистрация", "Вход", "Выход из системы" };
-const vector<string> ADMIN_MODULE_POINTS{ "Управление учётными записями пользователей", "Работа с ассортиментом", "Выйти"};
+const vector<string> ADMIN_MENU_POINTS{ "Работа с данными пользователей", "Работа с ассортиментом магазина", "Выход" };
 const vector<string> LOGON_POINTS{ "Ввести логин","Ввести пароль","Войти","Назад" };
 const vector<string> NEW_USER_CONFIRM{ "Согласен","Отмена" };
+const vector<string> DEL_CONFIRM{ "\033[32mНет\033[0m", "\033[1;31mДа\033[0m" };
+const vector<string> USER_POINTS;
+const vector<string> ADMIN_POINTS{ "Работа с данными пользователей", "Работа с ассортиментом магазина", "Выход" };
+const vector<string> MAIN_ADMIN_POINTS{ "Работа с данными пользователей", "Работа с ассортиментом магазина", "Выход" };
+const vector<string> GREETING{ "Здравствуйте\, ", "Приветствуем\, ", "Доброго здоровья\, ", "Мы ждали Вас\, ", "Рады приветствовать\, " };
 
 
 void authorization();
 void readUserFile(struct User *&, int&);
 void addUserToFile(User&);
-int menu(const char[], const vector<string>);
+int menu(string, const vector<string>);
 void logon(User*&, int&);
-void logonInput(char[], const int&, const char[]);
+void logonInput(char[], const int&, const char[], bool);
 bool logonTry(char[], char[], User*&, int&);
 int compare(User*&, const int&, char[]);
 bool compare(const char[], const char[]);
@@ -33,12 +38,13 @@ void memoryReallocation(User*&, User&, int&);
 int getUsersCount();
 char*& hashing(char[],const char[],const char[]);
 void generateSalt(char* const&);
-void inputWord(char*, const int&);
+void inputWord(char*, const int&, bool);
 char notTrashAssignment(char& not_trash);
-void outputSymbol(char*, char, int&, int);
+void outputSymbol(char*, char, int&, int, bool);
 void redirection(User*&, User&, int&);
-void adminModule(User*&, User&, int&);
-void userModule(User&);
+void adminMenu(User*&, User&, int&);
+void userMenu(User&);
+void showUsers(User&, int&);
 
 struct User
 {
@@ -137,7 +143,7 @@ void createAdmin(User*& users, int& users_count)
 	addUserToFile(users[0]);
 }
 
-int menu(const char head[], const vector<string> menu_point)
+int menu(string head, const vector<string> menu_point)
 {
 	char exit_catcher = NULL,
 		switcher = NULL;
@@ -186,10 +192,21 @@ int menu(const char head[], const vector<string> menu_point)
 void newUser(User*& users, int& users_count)
 {
 	User new_user = { 3, '\0', '\0','\0','\0', false};
-	cout << NEW_USER_MENU << endl << ENTER_NEW_USER_LOGIN;
-	inputWord(new_user.login, LOGIN_LENGTH);
+
+	system("cls");
+	while ((new_user.login[0] == '\0' )|| (compare(users, users_count, new_user.login) != -1))
+	{
+		if (new_user.login[0] != '\0')
+		{
+			cout << '	' << INVALID_LOGIN << endl;
+			system("pause");
+			system("cls");
+		}
+		cout << NEW_USER_MENU << endl << ENTER_NEW_USER_LOGIN;
+		inputWord(new_user.login, LOGIN_LENGTH, false);
+	}
 	cout << endl << ENTER_NEW_USER_PASSWORD;
-	inputWord(new_user.password, PASSWORD_LENGTH);
+	inputWord(new_user.password, PASSWORD_LENGTH, true);
 	if (menu(NEW_USER_CONF_MENU, NEW_USER_CONFIRM) == 0)
 	{
 		generateSalt(new_user.first_salt);
@@ -211,8 +228,8 @@ void logon(User*& users, int& users_count)
 	{
 		switch (menu(LOGON_MENU, LOGON_POINTS))
 		{
-		case 0: logonInput(login, LOGIN_LENGTH, ENTER_LOGIN); break;
-		case 1: logonInput(password, PASSWORD_LENGTH, ENTER_PASSWORD); break;
+		case 0: logonInput(login, LOGIN_LENGTH, ENTER_LOGIN, false); break;
+		case 1: logonInput(password, PASSWORD_LENGTH, ENTER_PASSWORD, true); break;
 		case 2: 
 		{
 			if (logonTry(login, password, users, users_count) == true) return;
@@ -228,10 +245,10 @@ void logon(User*& users, int& users_count)
 	}
 }
 
-void logonInput(char line[], const int& line_length, const char message[])
+void logonInput(char line[], const int& line_length, const char message[], bool hide_flag)
 {
 	cout << endl << message;
-	inputWord(line, line_length);
+	inputWord(line, line_length, hide_flag);
 }
 
 bool logonTry(char login[], char password[], User*& users, int &users_count)
@@ -307,15 +324,22 @@ void generateSalt(char* const& salt)
 	salt[SALT_LENGTH - 1] = '\0';
 }
 
-void inputWord(char* line, const int& size)
+void inputWord(char* line, const int& size, bool hide_flag)
 {
 	char symbol = NULL,
 		not_trash = NULL;
 	int counter = 0;
-	while (line[counter] != '\0') counter++;
-	if (counter > 0) cout << line;
 	bool break_flag = false,
 		limit = false;
+
+	while (line[counter] != '\0') counter++;
+	if (counter > 0)
+	{
+		if (hide_flag == true)
+			for (int i = 0; i < counter; i++)
+				cout << '*';
+		else cout << line;
+	}
 	while (break_flag == false)
 	{
 		symbol = notTrashAssignment(not_trash);
@@ -345,7 +369,7 @@ void inputWord(char* line, const int& size)
 			if (counter > 0)
 			{
 				
-				outputSymbol(line, '\0', counter, -1);
+				outputSymbol(line, '\0', counter, -1, false);
 				cout << '\b' << ' ' << '\b';
 			}
 			break;
@@ -357,7 +381,7 @@ void inputWord(char* line, const int& size)
 				!((trash == 75) || (trash == 80) || (trash == 72) || (trash == 77) || (trash == -123)))
 			{
 				not_trash = trash;
-				outputSymbol(line, symbol, counter, 1);
+				outputSymbol(line, symbol, counter, 1,hide_flag);
 			}
 			break;
 		}
@@ -365,7 +389,7 @@ void inputWord(char* line, const int& size)
 		{
 			if ((symbol >= 'А' && symbol <= 'Я') || (symbol >= 'а' && symbol <= 'я') ||
 				(symbol >= 'A' && symbol <= 'Z') || (symbol >= 'a' && symbol <= 'z') ||
-				(symbol >= '0' && symbol <= '9')) outputSymbol(line, symbol, counter, 1);
+				(symbol >= '0' && symbol <= '9')) outputSymbol(line, symbol, counter, 1, hide_flag);
 			break;
 		}
 		}
@@ -373,10 +397,10 @@ void inputWord(char* line, const int& size)
 	line[counter] = '\0';
 }
 
-void outputSymbol(char*line, char symbol,int& counter, int i)
+void outputSymbol(char*line, char symbol,int& counter, int i, bool hide_flag)
 {
 	line[counter] = symbol;
-	cout << symbol;
+	(hide_flag == true)? cout<<'*' : cout << symbol;
 	counter += i;
 }
 
@@ -390,17 +414,33 @@ char notTrashAssignment(char& not_trash)
 
 void redirection(User*& users, User& user, int& users_count)
 {
-	(user.role == 1) ? userModule(user) : adminModule(users, user, users_count);
+	cout << " Вход выполнен успешно!";
+	system("pause");
+	(user.role == 1) ? userMenu(user) : adminMenu(users, user, users_count);
 }
 
-void adminModule(User*& users, User& admin, int& users_count)
+void adminMenu(User*& users, User& admin, int& users_count)
+{
+	while (true)
+	{
+		switch (menu((GREETING.at(rand() % 4) + admin.login + '!'), ADMIN_MENU_POINTS))
+		{
+		case 0: menu("проверка", DEL_CONFIRM); break;
+		case 1: break;
+		case 2: return;
+		}
+	}
+}
+
+void userMenu(User& user)
 {
 	cout << " Вход выполнен успешно!";
 	system("pause");
 }
-
-void userModule(User& user)
-{
-	cout << " Вход выполнен успешно!";
-	system("pause");
-}
+//s
+//void showUsers(User&, int& users_count)
+//{
+//	int num_of_visible = users_count;
+//	cout<<
+//	for(int i = 0;i< num_of_visible)
+//}
