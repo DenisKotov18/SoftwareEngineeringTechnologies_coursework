@@ -4,12 +4,15 @@
 #include <vector>
 #include <conio.h>
 #include <ctime>
+#include<iomanip>
 #include "Constants.h"
 #include "sha256.h"
 
 #define UP 72
 #define DOWN 80
 #define LIMIT_LENGTH 32
+#define LEFT 75
+#define RIGHT 77
 using namespace std;
 
 const vector<string> AUTHORIZATION_POINTS{ "Регистрация", "Вход", "Выход из системы" };
@@ -17,16 +20,21 @@ const vector<string> ADMIN_MENU_POINTS{ "Работа с данными пользователей", "Работ
 const vector<string> LOGON_POINTS{ "Ввести логин","Ввести пароль","Войти","Назад" };
 const vector<string> NEW_USER_CONFIRM{ "Согласен","Отмена" };
 const vector<string> DEL_CONFIRM{ "\033[32mНет\033[0m", "\033[1;31mДа\033[0m" };
+const vector<string> CONFIRM{ "Да", "Нет" };
 const vector<string> USER_POINTS;
-const vector<string> ADMIN_POINTS{ "Работа с данными пользователей", "Работа с ассортиментом магазина", "Выход" };
+const vector<string> ADMIN_POINTS{ "Работа с данными пользователей", "Работа с ассортиментом магазина", "Выход", "\033[4;37mПросмотр запросов\033[0m"};
 const vector<string> MAIN_ADMIN_POINTS{ "Работа с данными пользователей", "Работа с ассортиментом магазина", "Выход" };
 const vector<string> GREETING{ "Здравствуйте\, ", "Приветствуем\, ", "Доброго здоровья\, ", "Мы ждали Вас\, ", "Рады приветствовать\, " };
-
+const vector<string> USER_ROLE{ "\033[32mUser \033[0m", "\033[33mAdmin\033[0m", "\033[1;31mOwner\033[0m" };
+const vector<string> USER_ACCESS{ "\033[32mЕсть \033[0m", "\033[31mБлок.\033[0m" };
+const vector<string> ADMIN_REDACT_POINTS{ "Блокировка", "Изменить логин", "Изменить пароль", "Изменить роль", "Удалить учётную запись" ,"Назад"};
 
 void authorization();
 void readUserFile(struct User *&, int&);
+void sunc(User*&, const int&);
 void addUserToFile(User&);
-int menu(string, const vector<string>);
+int menu(string, const vector<string> , const int);
+int pointerCatcher(int&, const int&, int, const int&);
 void logon(User*&, int&);
 void logonInput(char[], const int&, const char[], bool);
 bool logonTry(char[], char[], User*&, int&);
@@ -36,7 +44,7 @@ void createAdmin(User *&, int&);
 void newUser(User*&, int&);
 void memoryReallocation(User*&, User&, int&);
 int getUsersCount();
-char*& hashing(char[],const char[],const char[]);
+char* hashing(char[],const char[],const char[]);
 void generateSalt(char* const&);
 void inputWord(char*, const int&, bool);
 char notTrashAssignment(char& not_trash);
@@ -44,11 +52,12 @@ void outputSymbol(char*, char, int&, int, bool);
 void redirection(User*&, User&, int&);
 void adminMenu(User*&, User&, int&);
 void userMenu(User&);
-void showUsers(User&, int&);
+void showUsers(User*&, int&, User&);
+void adminRedact(User*&, int&, User&, User&, int);
 
 struct User
 {
-	int role; //1 - user , 2 - admin , 3 - main admin
+	int role; //0 - user , 1 - admin , 2 - main admin
 	char login[LOGIN_LENGTH];
 	char password[PASSWORD_LENGTH];
 	char first_salt[SALT_LENGTH];
@@ -61,13 +70,6 @@ void main()
 	srand(time(NULL));
 	setlocale(LC_ALL, "RUSSIAN");
 	SetConsoleCP(1251);
-	/*cout << LIMIT;
-	for (int i = 65; i < 122; i++) cout <<(char) i;
-	while (true) {
-		char trash = 27;
-		char musor = _getch();
-	}
-	while (true) cout << _getch();*/
 	authorization();
 }
 
@@ -79,7 +81,7 @@ void authorization()
 	readUserFile(users, users_count);
 	while (program_end == false)
 	{
-		switch (menu(AUTHORIZATION_MENU, AUTHORIZATION_POINTS))
+		switch (menu(AUTHORIZATION_MENU, AUTHORIZATION_POINTS, AUTHORIZATION_POINTS.size()))
 		{
 		case 0: newUser(users, users_count); break;
 		case 1: logon(users, users_count); break;
@@ -88,7 +90,6 @@ void authorization()
 			break;
 		}
 	}
-	cout << users[1].password;
 	delete[]users;
 }
 
@@ -117,6 +118,13 @@ int getUsersCount()
 	return users_count;
 }
 
+void sunc(User*& users, const int & users_count)
+{
+	ofstream fout(FILE_OF_USERS, ios::binary | ios::out);
+	fout.write((char*)&users[0], sizeof(User) * users_count);
+	fout.close();
+}
+
 void addUserToFile(User& user)
 {
 	ofstream fout(FILE_OF_USERS, ios::binary | ios::app);
@@ -127,7 +135,7 @@ void addUserToFile(User& user)
 void createAdmin(User*& users, int& users_count)
 {
 	users = new User[1];
-	users[0].role = 3;
+	users[0].role = 2;
 	users[0].account_freeze = false;
 	users[0].login[0] = users[0].password[0] = 'a';
 	users[0].login[1] = users[0].password[1] = 'd';
@@ -138,17 +146,14 @@ void createAdmin(User*& users, int& users_count)
 	generateSalt(users[0].first_salt);
 	generateSalt(users[0].second_salt);
 	hashing(users[0].password, users[0].first_salt, users[0].second_salt);
-	
 	users_count++;
 	addUserToFile(users[0]);
 }
 
-int menu(string head, const vector<string> menu_point)
+int menu(string head, const vector<string> menu_point, const int points_amt)
 {
-	char exit_catcher = NULL,
-		switcher = NULL;
+	char exit_catcher;
 	int choise = 0;
-	const int points_amt = menu_point.size();
 
 	while (true)
 	{
@@ -167,31 +172,40 @@ int menu(string head, const vector<string> menu_point)
 		while (exit_catcher != -32)
 		{
 			exit_catcher = _getch();
-			if (exit_catcher == '\r' || switcher == '\r') return choise;
+			if (exit_catcher == '\r') return choise;
 		}
-		switcher = _getch();
-		switch (switcher)
-		{
-		case UP:
-		{
-			if (choise == 0) choise = points_amt - 1;
-			else choise--;
-			break;
-		}
-		case DOWN:
-		{
-			choise = (++choise) % points_amt;
-			break;
-		}
-		case '\r': return choise;
-		default: break;
-		}
+		pointerCatcher(choise, points_amt, 0, 1);
 	}
+}
+
+int pointerCatcher(int& column, const int& column_size, int line, const int& line_size)
+{
+	char switcher = NULL;
+
+	switcher = _getch();
+	
+	switch (switcher)
+	{
+	case UP: 
+	{
+		(column == 0) ? column = column_size - 1 : column--;
+		return line;
+	}
+	case DOWN:
+	{
+		column = ++column % column_size;
+		return line;
+	}
+	case LEFT: return (line == 0) ? line_size - 1 : --line;
+	case RIGHT: return ((line +1) % line_size);
+	default: break;
+	}
+	return line;
 }
 
 void newUser(User*& users, int& users_count)
 {
-	User new_user = { 3, '\0', '\0','\0','\0', false};
+	User new_user = { 0, '\0', '\0','\0','\0', false};
 
 	system("cls");
 	while ((new_user.login[0] == '\0' )|| (compare(users, users_count, new_user.login) != -1))
@@ -207,7 +221,7 @@ void newUser(User*& users, int& users_count)
 	}
 	cout << endl << ENTER_NEW_USER_PASSWORD;
 	inputWord(new_user.password, PASSWORD_LENGTH, true);
-	if (menu(NEW_USER_CONF_MENU, NEW_USER_CONFIRM) == 0)
+	if (menu(NEW_USER_CONF_MENU, NEW_USER_CONFIRM, NEW_USER_CONFIRM.size()) == 0)
 	{
 		generateSalt(new_user.first_salt);
 		generateSalt(new_user.first_salt);
@@ -226,7 +240,7 @@ void logon(User*& users, int& users_count)
 	char password[PASSWORD_LENGTH] = { '\0' };
 	while (true)
 	{
-		switch (menu(LOGON_MENU, LOGON_POINTS))
+		switch (menu(LOGON_MENU, LOGON_POINTS, LOGON_POINTS.size()))
 		{
 		case 0: logonInput(login, LOGIN_LENGTH, ENTER_LOGIN, false); break;
 		case 1: logonInput(password, PASSWORD_LENGTH, ENTER_PASSWORD, true); break;
@@ -299,7 +313,7 @@ void memoryReallocation(User*& users, User& new_user, int& users_count)
 	users = re_users;
 }
 
-char*& hashing(char password[], const char first_salt[], const char second_salt[])
+char* hashing(char password[], const char first_salt[], const char second_salt[])
 {
 	string str_1_salt =+ first_salt,
 		str_2_salt =+ second_salt,
@@ -404,7 +418,6 @@ void outputSymbol(char*line, char symbol,int& counter, int i, bool hide_flag)
 	counter += i;
 }
 
-
 char notTrashAssignment(char& not_trash)
 {
 	char symbol = not_trash;
@@ -414,18 +427,25 @@ char notTrashAssignment(char& not_trash)
 
 void redirection(User*& users, User& user, int& users_count)
 {
-	cout << " Вход выполнен успешно!";
+	system("cls");
+	if(user.account_freeze == false) cout << REDIRECTION_SUCCSESS << endl;
+	else
+	{
+		cout << REDIRECTION_FAIL << endl;
+		system("pause");
+		return;
+	}
 	system("pause");
-	(user.role == 1) ? userMenu(user) : adminMenu(users, user, users_count);
+	(user.role == 0) ? userMenu(user) : adminMenu(users, user, users_count);
 }
 
 void adminMenu(User*& users, User& admin, int& users_count)
 {
 	while (true)
 	{
-		switch (menu((GREETING.at(rand() % 4) + admin.login + '!'), ADMIN_MENU_POINTS))
+		switch (menu((GREETING.at(rand() % 4) + admin.login + '!'), ADMIN_POINTS, (admin.role == 3) ?ADMIN_POINTS.size() : ADMIN_POINTS.size()- 1))
 		{
-		case 0: menu("проверка", DEL_CONFIRM); break;
+		case 0: showUsers(users, users_count, admin); break;
 		case 1: break;
 		case 2: return;
 		}
@@ -437,10 +457,85 @@ void userMenu(User& user)
 	cout << " Вход выполнен успешно!";
 	system("pause");
 }
-//s
-//void showUsers(User&, int& users_count)
-//{
-//	int num_of_visible = users_count;
-//	cout<<
-//	for(int i = 0;i< num_of_visible)
-//}
+
+void showUsers(User *& users, int& users_count, User& admin)
+{
+	
+	int counter = 0,
+		page = 0,
+		first_visible = 0,
+		last_visible = 0;
+	bool uncorrect_flag = false;
+	while (true)
+	{
+		system("cls");
+		first_visible = 5 * page;
+		last_visible = (first_visible+5<users_count) ?  first_visible + 5 : users_count;
+		if (counter <first_visible || counter >= last_visible) counter = first_visible;
+
+		cout << setfill('_') << setw(43) << '_' << setfill(' ') << endl
+			<< '|' << TABLE << '|' << endl
+			<< '|' << setfill('-') << setw(41) << '-' << setfill(' ') << '|' << endl;
+
+		for (int i = first_visible; i < last_visible; i++)
+		{
+
+			if (i == counter) cout << "| >\033[32m" << setw(22) << left << users[i].login << "\033[0m   ";
+			else  cout << "|  " << setw(22) << users[i].login << "   ";
+
+			cout << setw(5) << USER_ROLE.at(users[i].role) << "   "
+				<< USER_ACCESS.at(users[i].account_freeze) << " |" << endl
+				<< '|' << setfill('-') << setw(41) << '-' << setfill(' ') << '|' << endl;
+		}
+
+		cout << '|' << setw(21) << right << page + 1 << '/' << setw(21) << left << (users_count / 5 + 1) << '|'
+			<< endl << '|' << setfill('-') << setw(41) << '-' << setfill(' ') << '|' << endl 
+			<< "Enter - Выбрать"  << endl <<  " ESC - Выход" << endl;
+
+		do
+		{
+			uncorrect_flag = false;
+			switch (_getch())
+			{
+			case '\r': 
+			{
+				if (admin.login != users[counter].login) adminRedact(users,users_count,admin,users[counter],counter);
+				else cout << REDACT_ERROR << endl;
+				system("pause");
+				break;
+			}
+			case 27: return;
+			case 224: page = pointerCatcher(counter, last_visible, page, (users_count / 5 + 1)); break;
+			default: uncorrect_flag = true;
+			}
+		} while (uncorrect_flag == true);
+	}
+}
+
+void adminRedact(User*& users, int& users_count, User& admin, User& user, int user_pos)
+{
+	while (true)
+	{
+		system("cls");
+		switch (menu(ADMIN_REDACT_MENU + (string)user.login + ".   " + ADMIN_REDACT_ACCESS + USER_ACCESS.at(user.account_freeze),
+			ADMIN_REDACT_POINTS, ADMIN_REDACT_POINTS.size()))
+		{
+
+		case 0:
+		{
+			if (menu((user.account_freeze == false) ? USER_FREEZE : USER_UNFREEZE, CONFIRM, CONFIRM.size()) == 0)
+			{
+				(user.account_freeze == false) ? user.account_freeze = true : user.account_freeze = false;
+				cout << DONE << endl;
+				system("pause");
+			}
+			break;
+		}
+		case 1:break;
+		case 2:break;
+		case 3:break;
+		case 4:break;
+		case 5: sunc(users, users_count); return;
+		}
+	}
+}
