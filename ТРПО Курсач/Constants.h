@@ -18,6 +18,10 @@ using namespace std;
 //global
 const char FILE_OF_USERS[] = "Users.bin";
 
+const char FILE_OF_DATA[] = "Data.bin";
+
+const char FILE_OF_FOOTWEAR[] = "Footwear.bin";
+
 const char DONE[] = "\033[32mГОТОВО!\033[0m";
 
 const char CANSEL[] = "\033[33mОтменено!\033[0m";
@@ -28,11 +32,15 @@ const vector<string> CONFIRM{ "Да", "Нет" };
 
 const vector<string> INTENTIONAL_CONFIRM{ "\033[32mНет\033[0m", "\033[1;31mДа\033[0m" };
 
-const vector<string> GREETING{ "Здравствуйте\, ", "Приветствуем\, ", "Доброго здоровья\, ", "Мы ждали Вас\, ", "Рады приветствовать\, " };
+const vector<string> GREETING{ "Здравствуйте, ", "Приветствуем, ", "Доброго здоровья, ", "Мы ждали Вас, ", "Рады приветствовать, ", "С возвращением,"};
 
 const vector<string> USER_ROLE{ "\033[32mUser \033[0m", "\033[33mAdmin\033[0m", "\033[1;31mOwner\033[0m" };
 
 const vector<string> USER_ACCESS{ "\033[32mЕсть \033[0m", "\033[31mБлок.\033[0m" };
+
+const char ENTER[] = "Enter - Выбрать";
+
+const char ESC[] = " ESC - Выход";
 
 
 //User
@@ -42,12 +50,21 @@ const int PASSWORD_LENGTH = 65;
 
 const int SALT_LENGTH = 16;
 
+const char LOGIN[] = "Логин: ";
+
+const char PASSWORD[] = "Пароль: ";
+
+//Product
+const int NAME_LENGTH = 30;
 
 //authorization
 const char AUTHORIZATION_HEAD[] = "		Добро пожаловать! Пожалуйста авторизируйтесь.";
 
 const vector<string> AUTHORIZATION_MENU{ "Регистрация", "Вход", "Выход из системы" };
 
+
+//readUserFile
+const char USERS_NOT_FOUND[] = "Не удаётся открыть файл с пользователями. Создать новый?";
 
 // redirection
 const char REDIRECTION_FAIL[] = "\033[31m Ваша учётная запись была заблокирована!\033[0m";
@@ -56,6 +73,10 @@ const char REDIRECTION_FAIL[] = "\033[31m Ваша учётная запись была заблокирована
 
 //adminMenu
 const vector<string> ADMIN_MENU{ "Работа с данными пользователей", "Работа с ассортиментом магазина", "Редактировать учётную запись", "Выход"};
+
+
+//userMenu
+const vector<string> USER_MENU{ "Работа с ассортиментом магазина", "Редактировать учётную запись", "Выход" };
 
 
 //inputWord
@@ -142,3 +163,27 @@ const char SELF_DELETE[] = "Вы уверены, что хотите \033[4;31mБЕЗВОЗВРАТНО УДАЛИТ
 
 //delUser
 const char DEL_EXEPTION[] = "\033[33mДанную учётную запись нельзя удалить!\033[0m";
+
+//assortmentManagment
+const char MANAGEMENT_HEAD[] = "--------------/Управление ассортиментом/--------------";
+
+const vector<string> MANAGEMENT_MENU{"Изменить ассортимент магазина", "Войти в режим пользователя", "Назад"};
+
+struct User // Структура пользователя
+{
+	int role; // Уровень доступа 0 - user , 1 - admin , 2 - owner
+	char login[LOGIN_LENGTH]; // логин пользователя
+	char password[PASSWORD_LENGTH]; // Хешированный пароль
+	char first_salt[SALT_LENGTH]; // 1-я соль для хеширования пароля
+	char second_salt[SALT_LENGTH]; // 2-я солья для хеширования пароля
+	bool account_freeze; // Состояние болкировки 
+};
+
+struct  Product // Структура ассортимента обуви
+{
+	char article; // артикул товара
+	char name[NAME_LENGTH]; // имя товара
+	char producer[NAME_LENGTH]; // название компании изготовителя
+	int size; // размер обуви
+	int amount; // количество пар
+};
