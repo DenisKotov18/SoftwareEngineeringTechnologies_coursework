@@ -398,16 +398,17 @@ int dataTable(Product*& products, int& products_count, const char message[])
 		first_visible = NUMBER_OF_VISIBLE * page;
 		last_visible = (first_visible + NUMBER_OF_VISIBLE < products_count) ? first_visible + NUMBER_OF_VISIBLE : products_count;
 
-		cout << ' ' << setfill('_') << setw(35) << '_' << '|' << TABLE_ASSORTMENT << '|' << setw(35) << '_' << setfill(' ') << endl;
+		cout << setfill('_') << setw(39) << '_' << '|' << TABLE_ASSORTMENT << '|' << setw(39) << '_' << setfill(' ') << endl;
 		for (int i = first_visible; i < last_visible; i++)
 		{
-			cout << ' ' << i + 1 << ". " << FINAL_NAME << "\033[35m" << setw(30)  << left << products[i].name << "\033[0m "
-				<< FINAL_PRODUCER  << "\033[36m" << setw(30) << left << products[i].producer << endl << "\033[0m	"
+			cout << ' ' << i + 1 << ". " << FINAL_NAME << "\033[1;35m" << setw(30) << left << products[i].name << "\033[0m "
+				<< FINAL_PRODUCER << "\033[1;35m" << setw(30) << left << products[i].producer << endl << "\033[0m	"
 				<< FINAL_PRICE << "\033[32m" << products[i].price << "\033[0m, " << FINAL_ARTICLE << "\033[32m" << products[i].article << "\033[0m, "
-				<< FINAL_SIZE << "\033[32m" << products[i].size << "\033[0m, " << FINAL_AMOUNT << "\033[32m" << products[i].amount << "\033[0m" << endl << endl;
+				<< FINAL_SIZE << "\033[32m" << products[i].size << "\033[0m, " << FINAL_AMOUNT << "\033[32m" << products[i].amount << "\033[0m" << endl;
+			if (i != last_visible - 1) cout << setfill('-') << setw(91) << '-' << setfill(' ') << endl;
 		}
-		cout << ' ' << setfill('_') << setw(35) << '_' << '|' << TABLE_ASSORTMENT << '|' << setw(35) << '_' << setfill(' ') << endl
-			<< '<' << setw(42) << right << page + 1 << '/' << setw(38) << left << ((products_count - 1) / NUMBER_OF_VISIBLE + 1) << '>' << endl
+		cout << setfill('_') << setw(39) << '_' << '|' << TABLE_ASSORTMENT << '|' << setw(39) << '_' << setfill(' ') << endl
+			<< " <" << setw(43) << right << page + 1 << '/' << setw(43) << left << ((products_count - 1) / NUMBER_OF_VISIBLE + 1) << '>' << endl
 			<< endl << message << endl << ESC;
 		do
 		{

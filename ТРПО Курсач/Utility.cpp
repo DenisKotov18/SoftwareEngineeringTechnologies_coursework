@@ -51,37 +51,6 @@ int pointerCatcher(int& column, const int& first_point, const int& last_point, i
 	}
 	return line;
 }
-//
-//string intToString(int number)
-//{
-//	string line = to_string(number);
-//	/*if (int(number / 10 == 0)) line = digitRecognition(number);
-//	while (number /1 != 0)
-//	{
-//		int crutch = number % 10;
-//		number /= 10;
-//		line = line + digitRecognition(crutch);
-//	}*/
-//	return line;
-//}
-//
-//char digitRecognition(int number)
-//{
-//	switch (number)
-//	{
-//	case 0: return'0';
-//	case 1: return'1';
-//	case 2: return'2';
-//	case 3: return'3';
-//	case 4: return'4';
-//	case 5: return'5';
-//	case 6: return'6';
-//	case 7: return'7';
-//	case 8: return'8';
-//	case 9: return'9';
-//	default: return 0;
-//	}
-//}
 
 void generateSalt(char* const& salt)
 {

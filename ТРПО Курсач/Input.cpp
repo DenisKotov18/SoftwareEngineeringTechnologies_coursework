@@ -73,7 +73,7 @@ char* inputWord(char* line, const int& size, bool hide_flag)
 		{
 			if ((symbol >= 'À' && symbol <= 'ß') || (symbol >= 'à' && symbol <= 'ÿ') ||
 				(symbol >= 'A' && symbol <= 'Z') || (symbol >= 'a' && symbol <= 'z') ||
-				(symbol >= '0' && symbol <= '9') || symbol == '_') outputSymbol(line, symbol, counter, 1, hide_flag);
+				(symbol >= '0' && symbol <= '9') || symbol == '_' || symbol == ' ') outputSymbol(line, symbol, counter, 1, hide_flag);
 			break;
 		}
 		}
