@@ -14,10 +14,18 @@ void newUser( User*& users, int& users_count)
 			system("cls");
 		}
 		cout << NEW_USER_HEAD << endl << ENTER_NEW_USER_LOGIN;
-		inputWord(new_user.login, LOGIN_LENGTH, false);
+		if (inputWord(new_user.login, LOGIN_LENGTH, false) == NULL)
+		{
+			canselFunc();
+			return;
+		}
 	}
 	cout << endl << ENTER_NEW_USER_PASSWORD;
-	inputWord(new_user.password, PASSWORD_LENGTH, true);
+	if(inputWord(new_user.password, PASSWORD_LENGTH, true) == NULL)
+	{
+		canselFunc();
+			return;
+	}
 	if (menu(NEW_USER_CONF_HEAD, NEW_USER_CONFIRM) == 0)
 	{
 		generateSalt(new_user.first_salt);
@@ -25,10 +33,9 @@ void newUser( User*& users, int& users_count)
 		hashing(new_user.password, new_user.first_salt, new_user.second_salt);
 		userMemoryReallocation(users, new_user, users_count);
 		addUserToFile(new_user);
-		cout << endl << DONE << endl;
+		doneFunc();
 	}
-	else cout << endl << CANSEL << endl;
-	system("pause");
+	else canselFunc();
 }
 
 void createAdmin(User*& users, int& users_count)
@@ -123,7 +130,7 @@ void adminMenu(User*& users, User& admin, int& users_count, const int& admin_pos
 		switch (menu((GREETING.at(rand() % GREETING.size()) + admin.login + '!'), ADMIN_MENU))
 		{
 		case 0: showUsers(users, users_count, admin); break;
-		case 1: break;
+		case 1: assortmentManagment(admin); break;
 		case 2:
 			if (redactProfile(users, admin, users_count, admin_pos) == 0) return;
 			else break;
@@ -139,7 +146,7 @@ void userMenu(User*& users, User& user, int& users_count, const int& user_pos)
 	{
 		switch (menu((GREETING.at(rand() % GREETING.size()) + user.login + '!'), USER_MENU))
 		{
-		case 0:break;
+		case 0:assortmentManagment(user); break;
 		case 1:
 			if (redactProfile(users, user, users_count, user_pos) == 0) return;
 			else break;
@@ -182,7 +189,7 @@ void showUsers(User*& users, int& users_count, User& admin)
 		}
 		cout << '|' << setw(21) << right << page + 1 << '/' << setw(19) << left << ((users_count - 1) / NUMBER_OF_VISIBLE + 1) << '|'
 			<< endl << '|' << setfill('-') << setw(41) << '-' << setfill(' ') << '|' << endl
-			<< ENTER << endl << ESC << endl;
+			<< ENTER_USER << endl << ESC << endl;
 
 		do
 		{
@@ -226,9 +233,8 @@ void adminRedact(User*& users, int& users_count, User& admin, User& user, int us
 			if (menu((user.account_freeze == false) ? USER_FREEZE : USER_UNFREEZE, CONFIRM) == 0)
 			{
 				(user.account_freeze == false) ? user.account_freeze = true : user.account_freeze = false;
-				cout << DONE << endl;
 				writeToUser(users, users_count);
-				system("pause");
+				doneFunc();
 			}
 			break;
 		}
@@ -245,9 +251,8 @@ void adminRedact(User*& users, int& users_count, User& admin, User& user, int us
 				case 3:
 				{
 					user.role = menu(NEW_ROLE_HEAD, NEW_ROLE_MENU);
-					cout << DONE << endl;
 					writeToUser(users, users_count);
-					system("pause");
+					doneFunc();
 					break;
 				}
 				case 4:
@@ -321,11 +326,10 @@ void redactUserData(User*& users, const int& users_count, User& user, char user_
 	{
 		copyLine(new_data, user_data, false);
 		writeToUser(users, users_count);
-		cout << DONE << endl;
+		doneFunc();
 	}
-	else cout << CANSEL << endl;
+	else canselFunc();
 	delete[]new_data;
-	system("pause");
 }
 
 void userMemoryReallocation(User*& users, User& new_user, int& users_count)
@@ -377,12 +381,11 @@ bool delUser(User*& users, int& users_count, const int& del_pos, const char mess
 			for (int i = del_pos; i < users_count - 1; i++)
 				users[i] = users[i + 1];
 			users_count--;
-			cout << DONE << endl;
 			writeToUser(users, users_count);
-			system("pause");
+			doneFunc();
 			return true;
 		}
-		cout << CANSEL << endl;
+		canselFunc();
 	}
 	else cout << DEL_EXEPTION << endl;
 	system("pause");

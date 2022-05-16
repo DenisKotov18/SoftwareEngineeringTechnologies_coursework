@@ -46,7 +46,7 @@ void addUserToFile(User& user)
 
 void readDataFile(Product*& products, int& products_count)
 {
-	ifstream fin(FILE_OF_USERS, ios::binary | ios::in);
+	ifstream fin(FILE_OF_DATA, ios::binary | ios::in);
 	if (!fin.is_open()) return;
 	else
 	{
@@ -54,7 +54,7 @@ void readDataFile(Product*& products, int& products_count)
 		if (products_count != 0)
 		{
 			products = new Product[products_count];
-			fin.read((char*)&products[0], sizeof(User) * products_count);
+			fin.read((char*)&products[0], sizeof(Product) * products_count);
 		}
 	}
 	fin.close();
@@ -71,13 +71,13 @@ int getProductsCount()
 void writeToData(Product*& products, const int& products_count)
 {
 	ofstream fout(FILE_OF_DATA, ios::binary | ios::out);
-	fout.write((char*)&products[0], sizeof(User) * products_count);
+	fout.write((char*)&products[0], sizeof(Product) * products_count);
 	fout.close();
 }
 
 void addDataToFile(Product& product)
 {
 	ofstream fout(FILE_OF_DATA, ios::binary | ios::app);
-	fout.write((char*)&product, sizeof(User));
+	fout.write((char*)&product, sizeof(Product));
 	fout.close();
 }

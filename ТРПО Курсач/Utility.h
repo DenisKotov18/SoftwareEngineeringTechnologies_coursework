@@ -13,3 +13,8 @@ char* hashing(char[], const char[], const char[]); //хеширование пароля
 bool isSimilar(const char[], const char[]); // функция сравнения строк
 
 char* copyLine(const char[], char[], bool); // копирование С-строки в новую
+
+void canselFunc();
+void doneFunc();
+
+int checkRange(const int&, const int&, const int&, const char[]);
